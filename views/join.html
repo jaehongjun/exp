@@ -1,0 +1,81 @@
+<!-- ******************************************
+*  Author : RedFlia   
+*  Created On : Sat Dec 16 2017
+*  File : join.html
+******************************************* -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="RedFlia">
+    <title></title>
+</head>
+<script>
+    var User = function(){
+        this.username = "";
+        this.userage= "";
+        this.userid= "";
+        this.userpwd= "";
+        this.useraddress= "";
+        this.validation = function(){            
+            for(var key in this){
+                var obj = document.getElementById(key);
+                if(obj.getAttribute("data-val")){
+                    var len = obj.getAttribute("data-val").split(",")[0];
+                    var msg = obj.getAttribute("data-val").split(",")[1];            
+                    if(this[key].length<len){
+                        alert(msg);
+                        obj.value="";
+                        obj.focus();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    function login(){
+        var user = new User();
+        for(var key in user){
+            if(document.getElementById(key)){
+                user[key]  = document.getElementById(key).value.trim();
+            }
+        }
+        user.validation();
+    }
+</script>
+<body>
+    <center>
+    <h1>회원가입</h1>
+    
+    <table border="1">
+    <tr>
+    <td>이름</td>
+    <td><input type="text" name="username" id="username"></td>
+    </tr>
+    <tr>
+    <td>나이</td>
+    <td><input type="text" name="userage" id="userage"></td>
+    </tr>
+    <tr>
+    <td>아이디 </td>
+    <td><input type="text" name="userid" id="userid" data-val="3,아이디가 짧습니다."></td>
+    </tr>
+    <tr>
+    <td>비밀번호 </td>
+    <td><input type="text" name="userpwd" id="userpwd"></td>
+    </tr>
+    <tr>
+    <td>주소</td>
+    <td><input type="text" name="useraddress" id="useraddress"></td>
+    </tr>
+    <tr>
+    <td colspan="2" align="center"><input type="button" onclick="login()" value="전송"></td>
+    </tr>
+    </table>
+    
+    </center>
+</body>
+
+</html>
