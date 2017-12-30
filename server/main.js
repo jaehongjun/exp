@@ -9,7 +9,7 @@ const mysql2 = require('promise-mysql');
 
 var connection = mysql.createConnection(dbConfig);
 var connection2 = mysql2.createConnection;
-
+const con = mysql2.createConnection(dbConfig);
 app.set('port', (process.env.PORT || 3000));
 
 //app.use('/', express.static(__dirname + '/../dist'));
@@ -51,12 +51,12 @@ var rowsHandle = (rows)=>{
     return result;
 }
 
-
+// RESTFUL get post put delete trace
 app.use(function(req, res, next) {
 	res.header('X-Frame-Options','SAMEORIGIN');
 	res.header('Access-Control-Allow-Credentials', true);
 	res.header('Access-Control-Allow-Origin', '*');
-	res.header('Access-Control-Allow-Methods','GET,POST');
+	res.header('Access-Control-Allow-Methods','GET,POST,DELETE,PUT');
 	res.header('Access-Control-Allow-Headers','X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
 	next();
 });
@@ -75,6 +75,7 @@ app.get('/api/depart',(req,res,next)=>{
     depart["diCnt"] = 2;
     result["di"] = depart;
     res.json(result);
+    
 });
 // get 방식인것만 쓰겠다.
 app.get('/api/users',(req, res, next)=>{
@@ -131,6 +132,100 @@ app.get('/api/userhis/:userNo',(req, res, next)=>{
         console.log(result);
         res.json(result);
     });
+})
+app.get('/api/departs/:diNo',(req, res, next)=>{
+    
+    var sql = "select diNo,diName,diDesc,diCnt from Depart_info where diNo = ? ";    
+    var diNo = [req.params.diNo];
+    console.log(diNo);    
+    console.log(sql);    
+    con.then((con)=>{
+        return con.query(sql,diNo);
+    }).then(rows=>{
+        res.json(rows)
+    })
+})
+app.get('/api/departs',(req, res, next)=>{
+    
+    var sql = "select diNo,diName,diDesc,diCnt from Depart_info"
+    con.then((con)=>{
+        return con.query(sql);
+    }).then(rows=>{
+        res.json(rows)
+    })
+})
+app.delete('/api/departs/:diNo',(req, res, next)=>{
+    
+    var sql = "delete from Depart_info where diNo = ? ";    
+    var diNo = [req.params.diNo];
+    console.log(diNo);    
+    console.log(sql);    
+    var result = {};
+    con.then(con=>{
+        return con.query(sql,diNo);
+    }).then(rows=>{
+        res.json(rows);
+    }).catch(errorHandle)
+    .then((result) => {
+        console.log(result);
+        res.json(result);
+    })
+    // 내가 한거
+    // .then(rows=>{
+    //     console.log(rows)
+    //     result["succeed"]="OK";
+    //     if(rows.affectedRows != 1){
+    //         result["succeed"] = "no"
+    //     }
+    //     res.json(result);
+    // })
+})
+
+app.post('/api/departs',(req, res, next)=>{
+    console.log(req.body);
+    
+    var sql = "insert into Depart_info(diName,didesc,dicnt)"
+    sql += "values(?,?,?)"
+    var obj = req.body;
+    var values = [obj.diName,obj.diDesc,obj.diCnt]
+    console.log(values);
+    var result = {};
+    con.then(con=>{
+        return con.query(sql,values);
+    }).then(rows=>{
+        console.log(rows)
+        result["succeed"]="OK";
+        if(rows.affectedRows != 1){
+            result["succeed"] = "no"
+        }
+        res.json(result);
+    })
+    
+})
+
+app.post('/api/departs/update',(req, res, next)=>{
+    console.log(req.body);
+    
+    var sql = "update Depart_info"
+    sql += "set diName = ?,";
+    sql += "diDesc = ?,";
+    sql += "diCnt = ?";
+    sql += "where diNo = ?";
+    var obj = req.body;
+    var values = [obj.diName,obj.diDesc,obj.diCnt,obj.diNo]
+    console.log(values);
+    var result = {};
+    con.then(con=>{
+        return con.query(sql,values);
+    }).then(rows=>{
+        console.log(rows)
+        result["succeed"]="OK";
+        if(rows.affectedRows != 1){
+            result["succeed"] = "no"
+        }
+        res.json(result);
+    })
+    
 })
 
 app.post('/api/users',(req,res,next)=>{
