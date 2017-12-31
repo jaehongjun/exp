@@ -145,6 +145,96 @@ app.get('/api/departs/:diNo',(req, res, next)=>{
         res.json(rows)
     })
 })
+
+
+app.get('/api/userdeparts',(req,res,next)=>{
+    var sql = "select * from user_info ui,depart_info di"
+    sql += " where ui.dino = di.dino;"
+    con.then((con)=>{
+        return con.query(sql);
+    }).then(rows=>{
+        res.json(rows)
+    })
+})
+app.get('/api/userdeparts/select',(req,res,next)=>{
+    var sql = "select * from depart_info"
+    con.then((con)=>{
+        return con.query(sql);
+    }).then(rows=>{
+        res.json(rows)
+    })
+})
+app.delete('/api/userdeparts/:userno',(req,res,next)=>{
+    var sql = "select dino from user_info";
+    sql += " where userno = ?"
+    var userno = req.params.userno;
+    result = {};
+    con.then((con)=>{
+        return con.query(sql,userno);
+    }).then(
+        rows=>{
+            console.log(rows);
+            var sql = "delete from user_info"
+            sql += " where userno = ?"
+            var userno = req.params.userno;
+            result = {};
+    })
+    .catch(errorHandle)
+    .then(rows=>{
+        if(rows.affectedRows == 1){
+            result["succeed"]="OK";            
+        }else{
+            result["succeed"] = "no"
+        }
+        res.json(result)
+    }).then(
+        rows=>{
+
+        }
+    )
+})
+app.post('/api/userdeparts/',(req,res,next)=>{
+
+    var sql = "update user_info"
+    sql += " set username = ?,";
+    sql += " userid = ?,";
+    sql += " dino = ?";
+    sql += " where userno = ?";
+    var obj = req.body;
+    var values = [obj.username,obj.userid,obj.dino,obj.userno]
+    console.log(values);
+    var result = {};
+    con.then(con=>{
+        return con.query(sql,values);
+    }).catch(errorHandle)
+    .then(rows=>{
+        console.log(rows)
+        result["succeed"]="OK";
+        if(rows.affectedRows != 1){
+            result["succeed"] = "no"
+        }
+        res.json(result);
+    }).then(
+        rows =>{
+            if(result.succeed=='OK'){
+                result["succeed"] = "no"
+                var sql = "update depart_info"
+                sql += " set dicnt = dicnt-1";
+                sql += " where dino = ?";
+                var values = [obj.dino]
+                con.then(con=>{
+                    return con.query(sql,values);
+                }).catch(errorHandle)
+                .then(rows=>{
+                    if(rows.affectedRows == 1){
+                        result["succeed"] = "OK"
+                    }
+                })
+
+            };
+        }
+    )
+})
 app.get('/api/departs',(req, res, next)=>{
     
     var sql = "select diNo,diName,diDesc,diCnt from Depart_info"
@@ -191,15 +281,37 @@ app.post('/api/departs',(req, res, next)=>{
     console.log(values);
     var result = {};
     con.then(con=>{
+        dbCon = con;
         return con.query(sql,values);
     }).then(rows=>{
         console.log(rows)
-        result["succeed"]="OK";
-        if(rows.affectedRows != 1){
-            result["succeed"] = "no"
+        result["succeed"]="NO";
+        if(rows.affectedRows==1){
+            var diNo = rows.insertId;
+            console.log(diNo)
+            sql = "select ? as diNo, count(1) as diCnt from user_info where dino=?"
+            return dbCon.query(sql,[diNo,diNo])            
         }
-        res.json(result);
+    }).then(rows=>{
+        var diCnt, diNo;
+        rows.map(row=>{
+            diCnt = row.diCnt;
+            diNo = row.diNo;
+        })
+        sql = "update depart_info set dicnt = ? where diNo = ?";
+        return dbCon.query(sql,[diCnt, diNo]);
+    }).then(rows=>{
+        if(rows.affectedRows==1){
+            result["succeed"] = "OK"
+            result["rows"] = rows;
+        }
+    }).catch(err=>{
+        console.log(err);
+        result["succeed"] = "NO"
+    }).then(data=>{
+        res.json(result)
     })
+
     
 })
 
@@ -207,10 +319,10 @@ app.post('/api/departs/update',(req, res, next)=>{
     console.log(req.body);
     
     var sql = "update Depart_info"
-    sql += "set diName = ?,";
-    sql += "diDesc = ?,";
-    sql += "diCnt = ?";
-    sql += "where diNo = ?";
+    sql += " set diName = ?,";
+    sql += " diDesc = ?,";
+    sql += " diCnt = ?";
+    sql += " where diNo = ?";
     var obj = req.body;
     var values = [obj.diName,obj.diDesc,obj.diCnt,obj.diNo]
     console.log(values);
